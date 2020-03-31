@@ -1,0 +1,25 @@
+{
+    "name": "itlogger",
+    "version": "1.0.0",
+    "description": "",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js",
+        "server": "nodemon server.js",
+        "client": "npm start --prefix frontend",
+        "dev": "concurrently \"npm run server\" \"npm run client\" ",
+        "clientinstall": "npm install --prefix frontend",
+        "heroku-postbuild": " NPM_CONFIG_PRODUCTION=false npm install --prefix frontend && npm run build --prefix frontend"
+    },
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "concurrently": "^5.1.0",
+        "config": "^3.3.1",
+        "express": "^4.17.1",
+        "joi": "^14.3.1",
+        "mongoose": "^5.9.6",
+        "nodemon": "^2.0.2"
+    },
+    "proxy": "http://localhost:5000"
+}
