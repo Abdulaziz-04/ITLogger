@@ -1,46 +1,66 @@
-const joi = require('joi');
-const db = require('mongoose');
+const Joi = require('joi');
+const mongoose = require('mongoose');
 
-const techSchema = new db.Schema({
-    firstName: {
-        type: String,
-        required: true
+const techSchema = new mongoose.Schema(
+    {
+        firstName: {
+            type: String,
+            required: true,
+            trim: true
+        },
+        lastName: {
+            type: String,
+            required: true,
+            trim: true
+        }
     },
-    lastName: {
-        type: String,
-        required: true
-    }
-});
-const Tech = db.model('technicians', techSchema);
+    { timestamps: true }
+);
+const Tech = mongoose.model('technicians', techSchema);
 
 const validateTech = tech => {
-    const schema = {
-        firstName: joi.string().required(),
-        lastName: joi.string().required()
-    };
-    return joi.validate(tech, schema);
+    const schema = Joi.object({
+        firstName: Joi.string().trim().required(),
+        lastName: Joi.string().trim().required()
+    });
+    return schema.validate(tech);
 };
 
 module.exports.Tech = Tech;
 module.exports.validateTech = validateTech;
 
-const logSchema = new db.Schema({
-    message: {
-        type: String,
-        required: true
+const logSchema = new mongoose.Schema(
+    {
+        message: {
+            type: String,
+            required: true,
+            trim: true
+        },
+        attention: {
+            type: Boolean,
+            default: false
+        },
+        status: {
+            type: String,
+            enum: ['open', 'in_progress', 'resolved'],
+            default: 'open'
+        },
+        category: {
+            type: String,
+            trim: true,
+            default: 'General'
+        },
+        dt: {
+            type: Date,
+            default: Date.now
+        },
+        tech: {
+            type: String,
+            trim: true
+        }
     },
-    attention: {
-        type: Boolean,
-        default: false
-    },
-    dt: {
-        type: Date,
-        default: Date.now()
-    },
-    tech: {
-        type: String
-    }
-});
-const Logs = db.model('logs', logSchema);
+    { timestamps: true }
+);
+const Logs = mongoose.model('logs', logSchema);
 
 module.exports.Logs = Logs;

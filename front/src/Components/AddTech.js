@@ -1,71 +1,84 @@
 import React, { useState, useContext } from 'react';
+import {
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    TextField,
+    Button,
+    Stack,
+    Snackbar,
+    Alert
+} from '@mui/material';
 import LogContext from '../ContextAPI/LogsAPI/LogContext';
-import M from 'materialize-css/dist/js/materialize.min.js';
 
-const AddTech = () => {
-    const context = useContext(LogContext);
-    const { addTechs, clearAll } = context;
+const AddTech = ({ open, onClose }) => {
+    const { addTechs, clearAll } = useContext(LogContext);
     const [techdata, setTechdata] = useState({
         firstName: '',
         lastName: ''
     });
+    const [toast, setToast] = useState('');
+
     const onChange = e => {
         setTechdata({ ...techdata, [e.target.name]: e.target.value });
     };
-    const onSubmit = e => {
+    const onSubmit = async e => {
         e.preventDefault();
-        if (firstName === '' || lastName === '') {
-            M.toast({ html: 'Please enter the required fields' });
-        } else {
-            addTechs(techdata);
-            setTechdata({
-                firstName: '',
-                lastName: ''
-            });
-            M.toast({ html: 'Technician Added!' });
-            clearAll();
+        if (techdata.firstName.trim() === '' || techdata.lastName.trim() === '') {
+            setToast('Please enter the required fields.');
+            return;
         }
+        await addTechs(techdata);
+        setTechdata({
+            firstName: '',
+            lastName: ''
+        });
+        setToast('Technician added!');
+        clearAll();
+        onClose();
     };
     const { firstName, lastName } = techdata;
     return (
-        <div className='modal' id='add-tech'>
-            <div className='modal-content'>
-                <div className='row '>
-                    <h4 className=' left'>Add Technician :</h4>
-                </div>
-                <div className='row'>
-                    <div className='input-field'>
-                        <label className='active blue-text'>First Name</label>
-                        <input
-                            type='text'
+        <>
+            <Dialog open={open} onClose={onClose} fullWidth maxWidth='xs'>
+                <DialogTitle>Add Technician</DialogTitle>
+                <DialogContent dividers>
+                    <Stack spacing={2} sx={{ mt: 1 }}>
+                        <TextField
+                            label='First Name'
                             value={firstName}
                             name='firstName'
                             onChange={onChange}
+                            fullWidth
                         />
-                    </div>
-                </div>
-                <div className='row'>
-                    <div className='input-field'>
-                        <label className='active blue-text'>Last Name</label>
-                        <input
-                            type='text'
+                        <TextField
+                            label='Last Name'
                             value={lastName}
                             name='lastName'
                             onChange={onChange}
+                            fullWidth
                         />
-                    </div>
-                </div>
-                <div className='modal-footer'>
-                    <a
-                        href='#!'
-                        onClick={onSubmit}
-                        className='modal-close waves-light blue waves-effect btn '
-                    >
+                    </Stack>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={onClose}>Cancel</Button>
+                    <Button onClick={onSubmit} variant='contained'>
                         Add
-                    </a>
-                </div>
-            </div>
-        </div>
+                    </Button>
+                </DialogActions>
+            </Dialog>
+            <Snackbar
+                open={Boolean(toast)}
+                autoHideDuration={2000}
+                onClose={() => setToast('')}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+            >
+                <Alert severity='success' onClose={() => setToast('')} variant='filled'>
+                    {toast}
+                </Alert>
+            </Snackbar>
+        </>
     );
 };
 

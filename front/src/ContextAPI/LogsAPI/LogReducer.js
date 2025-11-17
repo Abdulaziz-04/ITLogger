@@ -10,8 +10,18 @@ import {
     SEARCH_LOG,
     ADD_TECH,
     GET_TECH,
-    CLEAR
+    CLEAR,
+    SET_FILTERS
 } from '../Types';
+
+const defaultFilters = {
+    query: '',
+    status: 'all',
+    attention: 'all',
+    tech: 'all',
+    category: 'all',
+    sort: 'recent'
+};
 
 const LogReducer = (state, action) => {
     switch (action.type) {
@@ -52,7 +62,7 @@ const LogReducer = (state, action) => {
                 error: null,
                 current: null,
                 loading: false,
-                filter: null
+                filters: defaultFilters
             };
         }
         case SET_CURRENT: {
@@ -92,13 +102,20 @@ const LogReducer = (state, action) => {
         case SEARCH_LOG: {
             return {
                 ...state,
-                filter: state.logs.filter(log => {
-                    const regex = new RegExp(`${action.payload}`, 'gi');
-                    return log.message.match(regex) || log.tech.match(regex);
-                })
+                filters: {
+                    ...state.filters,
+                    query: action.payload
+                }
+            };
+        }
+        case SET_FILTERS: {
+            return {
+                ...state,
+                filters: { ...state.filters, ...action.payload }
             };
         }
     }
 };
 
+export { defaultFilters };
 export default LogReducer;

@@ -1,55 +1,83 @@
-import React, { useEffect, useContext, Fragment } from 'react';
+import React, { useEffect, useContext, useMemo } from 'react';
+import { Grid, CircularProgress, Box, Typography, Stack, Button } from '@mui/material';
 import LogItem from './LogItem';
-
 import logContext from '../ContextAPI/LogsAPI/LogContext';
 
 const Logs = () => {
-    const context = useContext(logContext);
-    const { loading, getLogs, setLoading, logs, filter } = context;
+    const { loading, getLogs, logs, filters, resetFilters } = useContext(logContext);
+
     useEffect(() => {
-        setLoading();
         getLogs();
-        //eslint-disable-next-line
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
+
+    const filteredLogs = useMemo(() => {
+        let data = [...logs];
+        if (filters.query) {
+            const query = filters.query.toLowerCase();
+            data = data.filter(
+                log =>
+                    log.message.toLowerCase().includes(query) ||
+                    (log.tech && log.tech.toLowerCase().includes(query)) ||
+                    (log._id && log._id.toString().includes(query))
+            );
+        }
+        if (filters.status !== 'all') {
+            data = data.filter(log => (log.status || 'open') === filters.status);
+        }
+        if (filters.attention !== 'all') {
+            const needsAttention = filters.attention === 'true';
+            data = data.filter(log => Boolean(log.attention) === needsAttention);
+        }
+        if (filters.tech !== 'all') {
+            data = data.filter(log => log.tech === filters.tech);
+        }
+        if (filters.category !== 'all') {
+            data = data.filter(log => (log.category || 'General') === filters.category);
+        }
+        data.sort((a, b) => {
+            const aDate = new Date(a.dt || a.createdAt);
+            const bDate = new Date(b.dt || b.createdAt);
+            return bDate - aDate;
+        });
+        return data;
+    }, [logs, filters]);
 
     if (loading) {
         return (
-            <div
-                className='preloader-wrapper big active'
-                style={{ margin: ' 300px 450px 700px 950px ' }}
-            >
-                <div className='spinner-layer spinner-blue-only'>
-                    <div className='circle-clipper left'>
-                        <div className='circle'></div>
-                    </div>
-                    <div className='gap-patch'>
-                        <div className='circle'></div>
-                    </div>
-                    <div className='circle-clipper right'>
-                        <div className='circle'></div>
-                    </div>
-                </div>
-            </div>
+            <Box display='flex' justifyContent='center' mt={8}>
+                <CircularProgress size={64} />
+            </Box>
         );
     }
-    if (!loading && logs.length === 0) {
-        return <h3 className='center'>No logs to show...</h3>;
+
+    if (!loading && filteredLogs.length === 0) {
+        return (
+            <Stack spacing={2} alignItems='center' sx={{ py: 8 }}>
+                <Typography variant='h6'>No logs to show</Typography>
+                <Typography variant='body2' color='text.secondary'>
+                    Try relaxing the filters or add a new log.
+                </Typography>
+                <Button variant='outlined' onClick={resetFilters}>
+                    Reset filters
+                </Button>
+            </Stack>
+        );
     }
+
     return (
-        <Fragment>
-            <ul
-                className='collection with-header container'
-                style={{ marginTop: '30px' }}
-            >
-                <li className='collection-header'>
-                    <h4 className='center'>System Logs</h4>
-                </li>
-                {filter === null
-                    ? logs.map(log => <LogItem log={log} key={log._id} />)
-                    : filter.map(log => <LogItem log={log} key={log._id} />)}
-            </ul>
-            <div id='footer'>Created By : Abdulaziz Suria</div>
-        </Fragment>
+        <Stack spacing={2}>
+            <Typography variant='h6' sx={{ fontWeight: 700 }}>
+                Activity
+            </Typography>
+            <Grid container spacing={2}>
+                {filteredLogs.map(log => (
+                    <Grid item xs={12} md={6} key={log._id}>
+                        <LogItem log={log} />
+                    </Grid>
+                ))}
+            </Grid>
+        </Stack>
     );
 };
 

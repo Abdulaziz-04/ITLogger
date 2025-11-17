@@ -1,114 +1,127 @@
 import React, { useState, useContext, useEffect } from 'react';
-import M from 'materialize-css/dist/js/materialize.min';
+import {
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    Button,
+    TextField,
+    FormControlLabel,
+    Checkbox,
+    Select,
+    MenuItem,
+    Stack,
+    InputLabel,
+    FormControl
+} from '@mui/material';
+import { format } from 'date-fns';
 import LogContext from '../ContextAPI/LogsAPI/LogContext';
 
 const Edit = () => {
-    const context = useContext(LogContext);
-    const { techs, current, updateLogs, clearAll } = context;
+    const { techs, current, updateLogs, setCurrent } = useContext(LogContext);
     const [data, setData] = useState({
         message: '',
         attention: false,
-        tech: ''
+        tech: '',
+        status: 'open',
+        dt: ''
     });
-    const { message, attention, tech } = data;
+
+    useEffect(() => {
+        if (current !== null) {
+            const parsedDate = current.dt ? format(new Date(current.dt), "yyyy-MM-dd'T'HH:mm") : '';
+            setData({ ...current, dt: parsedDate });
+        }
+    }, [current]);
+
+    const handleClose = () => setCurrent(null);
 
     const onChange = e => {
         setData({ ...data, [e.target.name]: e.target.value });
     };
-    useEffect(() => {
-        if (current !== null) {
-            setData(current);
-        }
-    }, [current]);
-    const onSubmit = e => {
-        e.preventDefault();
-        if (message === '' || tech === '') {
-            M.toast({ html: 'Please enter message and tech' });
-        } else {
-            updateLogs(data);
 
-            setData({
-                attention: false,
-                message: '',
-                tech: ''
-            });
-            M.toast({ html: 'Message Updated!' });
-            clearAll();
+    const onSubmit = async e => {
+        e.preventDefault();
+        if (data.message.trim() === '' || data.tech.trim() === '') {
+            return;
         }
+        await updateLogs({ ...data, dt: data.dt ? new Date(data.dt) : data.dt });
+        handleClose();
     };
 
     return (
-        <div
-            className='modal'
-            style={{ width: '75%', height: '75%' }}
-            id='edit-log-modal'
-        >
-            <div className='modal-content'>
-                <h4>Edit System Log : </h4>
-                <div className='row'>
-                    <div className='input-field'>
-                        <input
-                            type='text'
-                            value={message}
-                            name='message'
+        <Dialog open={Boolean(current)} onClose={handleClose} fullWidth maxWidth='sm'>
+            <DialogTitle>Edit system log</DialogTitle>
+            <DialogContent dividers>
+                <Stack spacing={2} sx={{ mt: 1 }}>
+                    <TextField
+                        label='Log message'
+                        name='message'
+                        value={data.message}
+                        onChange={onChange}
+                        fullWidth
+                    />
+                    <FormControl fullWidth>
+                        <InputLabel id='edit-tech-label'>Technician</InputLabel>
+                        <Select
+                            labelId='edit-tech-label'
+                            name='tech'
+                            label='Technician'
+                            value={data.tech}
                             onChange={onChange}
-                        />
-                        {current === null && (
-                            <label htmlFor='message' className='active'>
-                                Log Message
-                            </label>
-                        )}
-                    </div>
-                </div>
-                <div className='row'>
-                    <div className='input-field'>
-                        {techs && (
-                            <select
-                                name='tech'
+                        >
+                            <MenuItem value=''>Select technician</MenuItem>
+                            {techs.map(t => (
+                                <MenuItem key={t._id} value={`${t.firstName} ${t.lastName}`}>
+                                    {t.firstName} {t.lastName}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+                        <FormControl fullWidth>
+                            <InputLabel id='edit-status-label'>Status</InputLabel>
+                            <Select
+                                labelId='edit-status-label'
+                                name='status'
+                                label='Status'
+                                value={data.status}
                                 onChange={onChange}
-                                className='browser-default'
-                                value={tech}
                             >
-                                <option value='' disabled>
-                                    Select Technician
-                                </option>
-                                {techs.map(t => (
-                                    <option key={t._id} t={t}>
-                                        {t.firstName + ' ' + t.lastName}
-                                    </option>
-                                ))}
-                            </select>
-                        )}
-                    </div>
-                </div>
-                <div className='row'>
-                    <div className='input-field'>
-                        <label>
-                            <input
-                                type='checkbox'
-                                className='filled-in'
-                                value={attention}
-                                checked={attention}
+                                <MenuItem value='open'>Open</MenuItem>
+                                <MenuItem value='in_progress'>In progress</MenuItem>
+                                <MenuItem value='resolved'>Resolved</MenuItem>
+                            </Select>
+                        </FormControl>
+                        <TextField
+                            label='Date / time'
+                            type='datetime-local'
+                            name='dt'
+                            value={data.dt}
+                            onChange={onChange}
+                            fullWidth
+                            InputLabelProps={{ shrink: true }}
+                        />
+                    </Stack>
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                checked={data.attention}
+                                onChange={e => setData({ ...data, attention: e.target.checked })}
                                 name='attention'
-                                onChange={e =>
-                                    setData({ ...data, attention: !attention })
-                                }
                             />
-                            <span>Attention Required </span>
-                        </label>
-                    </div>
-                </div>
-                <div className='modal-footer'>
-                    <a
-                        href='#!'
-                        onClick={onSubmit}
-                        className='modal-close waves-light blue waves-effect btn '
-                    >
-                        Enter
-                    </a>
-                </div>
-            </div>
-        </div>
+                        }
+                        label='Attention required'
+                    />
+                </Stack>
+            </DialogContent>
+            <DialogActions>
+                <Button onClick={handleClose}>Cancel</Button>
+                <Button onClick={onSubmit} variant='contained'>
+                    Update
+                </Button>
+            </DialogActions>
+        </Dialog>
     );
 };
 

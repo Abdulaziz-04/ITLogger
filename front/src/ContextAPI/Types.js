@@ -10,3 +10,4 @@ export const SEARCH_LOG = 'SEARCH_LOG';
 export const GET_TECH = 'GET_TECH';
 export const DELETE_TECH = 'DELETE_TECH';
 export const ADD_TECH = 'ADD_TECH';
+export const SET_FILTERS = 'SET_FILTERS';
